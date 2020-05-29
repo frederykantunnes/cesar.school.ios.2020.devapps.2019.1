@@ -7,14 +7,18 @@
 //
 
 import UIKit
+import CoreData
 
-class ConsolesTableViewController: UITableViewController {
+class ConsolesTableViewController: UITableViewController, NSFetchedResultsControllerDelegate {
 
-    
-    
+//    var fetchedResultController:NSFetchedResultsController<Console>!
+    var label = UILabel()
+   
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        label.text = "Você não tem console cadastrados"
+        label.textAlignment = .center
+        
         loadConsoles()
     }
     
@@ -30,37 +34,31 @@ class ConsolesTableViewController: UITableViewController {
         return 1
     }
 
+//    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+//
+//        let count = fetchedResultController?.fetchedObjects?.count ?? 0
+//
+//        tableView.backgroundView = count == 0 ? label : nil
+//
+//        return count
+//    }
+
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
         return ConsolesManager.shared.consoles.count
     }
-
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! PlataformaTableViewCell
+        
         let console = ConsolesManager.shared.consoles[indexPath.row]
-        cell.textLabel?.text = console.name
+        
+        cell.prepare(with: console)
+        
         return cell
     }
     
-
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-         
-        let console = ConsolesManager.shared.consoles[indexPath.row]
-        showAlert(with: console)
-        
-        // deselecionar atual cell
-        tableView.deselectRow(at: indexPath, animated: false)
-     }
-    
-    
-    // Override to support editing the table view.
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        
-        ConsolesManager.shared.deleteConsole(index: indexPath.row, context: context)
-        tableView.deleteRows(at: [indexPath], with: .fade)
-    }
     
 
     /*
@@ -77,6 +75,7 @@ class ConsolesTableViewController: UITableViewController {
         return true
     }
     */
+    
 
     /*
     // MARK: - Navigation
@@ -87,43 +86,26 @@ class ConsolesTableViewController: UITableViewController {
         // Pass the selected object to the new view controller.
     }
     */
+    
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // se ocorrer mudancas na entidade Console, a atualização automatica não irá ocorrer porque nosso NSFetchResultsController esta monitorando a entidade Game. Caso tiver mudanças na entidade Console precisamos atualizar a tela com a tabela de alguma forma: reloadData :)
+        tableView.reloadData()
+    }
 
-    func showAlert(with console: Console?) {
-        let title = console == nil ? "Adicionar" : "Editar"
-        let alert = UIAlertController(title: title + " plataforma", message: nil, preferredStyle: .alert)
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        // Get the new view controller using segue.destination.
+        // Pass the selected object to the new view controller.
         
-        alert.addTextField(configurationHandler: { (textField) in
-            textField.placeholder = "Nome da plataforma"
+        if segue.identifier! == "editar" {
+            print("chegou aqui")
+            let vc = segue.destination as! PlataformaViewController
+            vc.console = ConsolesManager.shared.consoles[tableView.indexPathForSelectedRow!.row]
+        
             
-            if let name = console?.name {
-                textField.text = name
-            }
-        })
-        
-        alert.addAction(UIAlertAction(title: title, style: .default, handler: {(action) in
-            let console = console ?? Console(context: self.context)
-            console.name = alert.textFields?.first?.text
-            do {
-                try self.context.save()
-                self.loadConsoles()
-            } catch {
-                print(error.localizedDescription)
-            }
-        }))
-        
-        alert.addAction(UIAlertAction(title: "Cancelar", style: .cancel, handler: nil))
-        alert.view.tintColor = UIColor(named: "second")
-        
-        present(alert, animated: true, completion: nil)
+        }
     }
-    
-    
-    @IBAction func addConsole(_ sender: UIBarButtonItem) {
-        print("addConsole")
-        
-        // nil indica que sera criado uma plataforma nova
-        showAlert(with: nil)
-    }
-    
     
 } // fim da classe

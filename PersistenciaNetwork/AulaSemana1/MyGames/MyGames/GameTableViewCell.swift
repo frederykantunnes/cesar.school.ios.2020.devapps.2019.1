@@ -28,7 +28,6 @@ class GameTableViewCell: UITableViewCell {
     }
     
     func prepare(with game: Game) {
-        
         lbTitle.text = game.title ?? ""
         lbConsole.text = game.console?.name ?? ""
         if let image = game.cover as? UIImage {
@@ -37,8 +36,5 @@ class GameTableViewCell: UITableViewCell {
             ivCover.image = UIImage(named: "noCover")
         }
     }
-    
-    
-    
 
 }
